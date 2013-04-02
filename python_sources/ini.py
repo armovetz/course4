@@ -1,3 +1,5 @@
+TIME_ID = 5
+
 USERS_NUMB = 35056          # CTHULHU
 ITEMS_NUMB = 21825          # CTHULHU
 TRAINING_USERS_RATE = 0.8   # CTHULHU
@@ -14,6 +16,8 @@ WINDOW_ITEMS_SIZE = int(ITEMS_NUMB / SWITCHES_ITEMS_NUMB)   # CTHULHU
 MAX_METAS_NUMB = 17
 #METAS_TO_USE = {3 : "place", 4 : "presenter", 6 : "category", 9 : "organizer", 11 : "city", 15 : "seminartype"}
 METAS_TO_USE = {6 : "categories", 15 : "seminar_types"}
+
+TIME_TRESHOLD_INTERVAL = 24
 
 """ 	select
 	0 - id
