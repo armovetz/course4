@@ -1,4 +1,14 @@
 import datetime
+import ini
+
+def gag():
+
+    print "!!!!!!!!!!!!!!!!!"
+    print " SHAME ON YOU!!!!"
+    print " It'S A GAG!!!!!!"
+    print "!!!!!!!!!!!!!!!!!"
+
+
 
 def getMeta(seminar_meta_string, meta_position_id):
     stri = seminar_meta_string.split('\t')[meta_position_id]
@@ -44,3 +54,40 @@ def sortMetaListByMeta(list, meta_id_position):
         return sorted(list, cmpTime)
     else:
         return sorted(list, my_cmp)
+        
+def cmpTime(time_string1, time_string2):
+        """ compares time, that is written in format YYYY-MM-DD HH:MM:SS """
+        
+        time1 = datetime.datetime.strptime(time_string1, "%Y-%m-%d %H:%M:%S")
+        time2 = datetime.datetime.strptime(time_string2, "%Y-%m-%d %H:%M:%S")
+        if time1.__ge__(time2):
+            return 1
+        else:
+            return -1
+            
+def ifTimeInterval(time_string1, time_string2):
+    time1 = datetime.datetime.strptime(time_string1, "%Y-%m-%d %H:%M:%S")
+    time2 = datetime.datetime.strptime(time_string2, "%Y-%m-%d %H:%M:%S")
+    
+    if (time1 - time2).days != 0:
+        return True
+    else:
+        return False
+
+def getTimeInterval(item_id, item_X_time_list):
+    
+    low_bound = -1
+    high_bound = -1
+    
+    i = item_id
+    while not ifTimeInterval(item_X_time_list[i - 1], item_X_time_list[item_id - 1]):
+        i -= 1
+    low_bound = i
+    
+    i = item_id
+    while not ifTimeInterval(item_X_time_list[i - 1], item_X_time_list[item_id - 1]):
+        i += 1
+    high_bound = i
+    
+    return [low_bound, high_bound]
+    

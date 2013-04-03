@@ -8,6 +8,7 @@ import subprocess
 import ini
 from ini import *
 import misc_functions
+from misc_functions import *
 
 def createItem_x_MetaMatrix_global():
     
@@ -112,6 +113,7 @@ def prepareDirs():
 
             os.chdir("..")
         
+    os.chdir("../../../python_sources")
     print "DIRS PREPARED!"
 
 # ===============================================
@@ -218,6 +220,7 @@ def createUser_x_MetaMatrices():
             # returning to "cross_validation" directory
             os.chdir("..")
 
+    os.chdir("../../../python_sources")
     print "TOTAL SUCCESS! \n USER x META local matrices are prepared!"
 
 # =======
@@ -232,6 +235,10 @@ def prepareTrainingMatrices():
     # cycle for each case
     for i in range(SWITCHES_USERS_NUMB):
         for j in range(SWITCHES_ITEMS_NUMB):
+            
+            print "Writing local training matrix ..."
+            now = datetime.datetime.now()
+            now_string = now.strftime("%Y-%m-%d %H:%M")
 
             print "window: user_window = ", i + 1, "/", SWITCHES_USERS_NUMB
             print "        item_window = ", j + 1, "/", SWITCHES_ITEMS_NUMB
@@ -247,22 +254,116 @@ def prepareTrainingMatrices():
             history_matrix = scipy.io.mmio.mmread("../../../well_done/history.mm")
             print "...done!"
             
+            
+            
             print "Converting sparse history_matrix to numpy array ..." # getting ENORMOUS matrix
             local_training_matrix = history_matrix.toarray()
             print "...done!"
             
-            print "Creating 'empty' testing window..."
+            print "Saving 'empty' testing window..."
             local_training_matrix[coords[0] : coords[2], coords[1] : coords[3]] = 0
             print "...done!"
             csr_local_training_matrix = scipy.sparse.csr_matrix(local_training_matrix)
-            #del local_training_matrix       #trying to delete this ENORMOUS matrix
+            #trying to delete this ENORMOUS matrix
+            del local_training_matrix
+            
+            scipy.io.mmio.mmwrite("history", csr_local_training_matrix, now_string, 'integer')
+            print "...done!"
+            
+            
+            
+            
+            os.chdir("..")
+    
+    os.chdir("../../../python_sources")
+
+    print "TOTAL SUCCESS! \n Training local matrices are prepared!"
+    
+# =====================================================================
+
+def prepareTestClusters():
+    #test_matrix = scipy.io.mmio.mmread("test.mtx")
+    test_matrix_file = open("test.mtx", 'r')
+    
+    # create item_X_time list
+    item_X_time_list = []
+    meta_file = open("../../../well_done/meta", 'r')
+    for line in meta_file:
+        item_X_time_list.append(getMetaString(line, TIME_ID))
+    meta_file.close()
+    
+    
+    # reading coords for current case
+    coords = misc_functions.getWindowCoords()
+    
+    # stuff before cycle
+    clusters_list = []
+    cur_cluster = ["user" + "\t" + str(coords[0] + 1)]
+    cur_user = 1
+    
+    # skip comments
+    for i in range(3):
+        test_matrix_file.readline()
+    
+    for line in test_matrix_file:
+        user = int(line.split()[0])
+        
+        # next user
+        if user != cur_user:
+            cur_user = user
+            clusters_list.append(cur_cluster)
+            cur_cluster = ["user " + str(user)]
+        
+        item = int(line.split()[1])
+        time_bounds = getTimeInterval(item, item_X_time_list)
+        cur_cluster.append(str(time_bounds[0]) + "\t" + str(item) + "\t" + str(time_bounds[1]))
+    
+    test_clusters_file = open("test_clusters", 'w')
+    test_clusters_file.write("low_bound high_bound  item_id\n")
+    for cluster in clusters_list:
+        for line in cluster:
+            test_clusters_file.write(line + "\n")
+
+
+# =====================================================================
+def prepareTestingMatrices():
+    """ Function prepareTrainingMatrices """
+    
+    os.chdir("../data/tmp/cross_validation")
+    
+    # cycle for each case
+    for i in range(SWITCHES_USERS_NUMB):
+        for j in range(SWITCHES_ITEMS_NUMB):
             
             print "Writing local training matrix ..."
             now = datetime.datetime.now()
             now_string = now.strftime("%Y-%m-%d %H:%M")
-            scipy.io.mmio.mmwrite("history", csr_local_training_matrix, now_string, 'integer')
+
+            print "window: user_window = ", i + 1, "/", SWITCHES_USERS_NUMB
+            print "        item_window = ", j + 1, "/", SWITCHES_ITEMS_NUMB
+
+            # changing directory for current case
+            cur_dir = str(i) + "_" + str(j)
+            os.chdir(cur_dir)
+            
+            # reading coords for current case
+            coords = misc_functions.getWindowCoords()
+
+            print "Reading history matrix ..."
+            history_matrix = scipy.io.mmio.mmread("../../../well_done/history.mm")
             print "...done!"
             
+            print "Saving test matrix..."
+            local_testing_matrix = (history_matrix.tocsr())[coords[0] : coords[2], coords[1] : coords[3]].copy()
+            scipy.io.mmio.mmwrite("test", local_testing_matrix, now_string, 'integer')
+            print "...done!"
+            
+            print "Creating local testing clusters..."
+            prepareTestClusters()
+            #misc_functions.gag();
+            
             os.chdir("..")
+    
+    os.chdir("../../../python_sources")
 
-    print "TOTAL SUCCESS! \n Training local matrices are prepared!"
+    print "TOTAL SUCCESS! \n Local test clusters are prepared!"
