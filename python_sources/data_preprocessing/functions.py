@@ -66,4 +66,3 @@ def GetNumerousAttributes():
 
 	output_file.close()
 	input_file.close()
-

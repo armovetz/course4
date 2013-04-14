@@ -1,4 +1,5 @@
 import datetime
+import sys
 import ini
 
 def gag():
@@ -13,7 +14,7 @@ def gag():
 def getMeta(seminar_meta_string, meta_position_id):
     stri = seminar_meta_string.split('\t')[meta_position_id]
     if stri == "":
-        return 0
+        return -1
     else:
         return int(stri)
         
@@ -74,20 +75,27 @@ def ifTimeInterval(time_string1, time_string2):
     else:
         return False
 
-def getTimeInterval(item_id, item_X_time_list):
+def getTimeInterval(item_id, item_X_time_list, coords):
     
     low_bound = -1
     high_bound = -1
     
     i = item_id
-    while not ifTimeInterval(item_X_time_list[i - 1], item_X_time_list[item_id - 1]):
+    while not ifTimeInterval(item_X_time_list[i], item_X_time_list[item_id]):
+        if (i - 1) < coords[1]:
+            break
         i -= 1
     low_bound = i
     
     i = item_id
-    while not ifTimeInterval(item_X_time_list[i - 1], item_X_time_list[item_id - 1]):
+    while not ifTimeInterval(item_X_time_list[i], item_X_time_list[item_id]):
+        if (i + 1) > coords[3]:
+            break
         i += 1
     high_bound = i
     
     return [low_bound, high_bound]
     
+def step():
+    print "Press any key to continue:"
+    sys.stdin.read(1)

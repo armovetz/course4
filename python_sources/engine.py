@@ -10,14 +10,13 @@ from ini import *
 
 # .INI
 #metas_to_use = {3 : "place", 4 : "presenter", 6 : "category", 9 : "organizer", 11 : "city", 15 : "seminartype"}
-metas_to_use = {6 : "categories", 15 : "seminar_types"}
-
-CONST_RATING_TRESHOLD = 0.4
+#metas_to_use = {6 : "categories", 15 : "seminar_types"}
 #meta_weights = numpy.array([[0], [0], [0], [0], [0], [0], [0.7], [0], [0], [0], [0], [0], [0], [0], [0], [0.3], [0]], dtype = float)
-meta_weights = numpy.array([[0.7], [0.3]], dtype = float)
+#meta_weights = numpy.array([[0.7], [0.3]], dtype = float)
 #map_vector = numpy.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
-def myRound(prediction_vector):
+"""
+CONST_RATING_TRESHOLD = 0.4
     res = zeros((1, len(prediction_vector)), dtype = int)
     for i in range(len(prediction_vector)):
         if prediction_vector[i] > CONST_RATING_TRESHOLD:
@@ -25,30 +24,30 @@ def myRound(prediction_vector):
         else:
             res[0,i] = 0
     return res
+"""
+
 
 def prediction():
     """
+        Main function for computing prediction rating.
     """
     
     coords = misc_functions.getWindowCoords()
     
-    """coord_file = open("window_coord", 'r')
-    start_zero_user = int(coord_file.readline().split()[2])
-    start_zero_item = int(coord_file.readline().split()[2])
-    stop_zero_user = int(coord_file.readline().split()[2])
-    stop_zero_item = int(coord_file.readline().split()[2])
-    coord_file.close()"""
+    """ OR WHAT DIS SHIT CHANGED MUST BE???? ^-_-^"""
+    test_users = range(coords[0], coords[2] + 1) # +-1 OR WHAT!?
+    test_items = range(coords[1], coords[3] + 1)
     
-    test_users = range(coords[0], coords[2]) # +-1 OR WHAT!?
-    test_items = range(coords[1], coords[3])
+    #print "test_items = ", test_items
     
+    # this matrix to be written as result finally
     prediction_matrix = zeros((len(test_users), len(test_items)), dtype = float)
     
     training_matrix = scipy.io.mmio.mmread("history.mtx").tocsr()
     
     item_X_meta_matrix = scipy.io.mmio.mmread("../../../well_done/items-metas_global.mtx").toarray()
     
-    """ CHANGE THIS SHIT 
+    """ CHANGE THIS SHIT  - probably remove
     # getting metas for seminars
     seminars_meta_list = []
     for line in open("../../../well_done/meta"):
@@ -58,64 +57,41 @@ def prediction():
     # getting meta matrices for corresponding using metas
     meta_ctr = 0
     meta_matrices = []
-    for meta in metas_to_use:
-        meta_matrice_file_name = "users-" + metas_to_use[meta] + ".mtx"
+    for meta in METAS_TO_USE:
+        meta_matrice_file_name = "users-" + METAS_TO_USE[meta] + ".mtx"
         exec("meta_matrices.append(scipy.io.mmio.mmread(\"" + meta_matrice_file_name + "\").toarray())")
 
     #user_counter = 0
     for user in test_users:
-        #print "user #", user
-        #form meta 
-        #user_metas = {}
-        user_metas = {}
-        values = zeros((len(metas_to_use), len(test_items)), dtype = float)
+        print "user #", user
+        
+        #user_metas = {} - changed to list because of problem with dimension
+        user_metas = []
+        
+        values = zeros((len(METAS_TO_USE), len(test_items)), dtype = float)
         meta_ctr = 0
-        for meta in metas_to_use:
-            print "meta = ", meta
-
-            print "meta_matrices = ", meta_matrices
-            print "meta_matrices[meta_ctr] = ", meta_matrices[meta_ctr]
-            print "meta_matrices[meta_ctr][user] = ", meta_matrices[meta_ctr][user]
-            user_vector = meta_matrices[meta_ctr][user]
-            print "user_vector = ", user_vector
-            # normalizing users counts of visited meta for using as weights
+        for meta in METAS_TO_USE:
+            user_vector = meta_matrices[meta_ctr][user - coords[0]]
+            
+            # normalizing counts of visited metas to use them as weights later
             if max(user_vector) != 0:
-                user_metas[meta] = 1.0 * user_vector / max(user_vector)
+                # user_metas[meta] = 1.0 * user_vector / max(user_vector)
+                user_metas.append(1.0 * user_vector / max(user_vector))
             else:
-                user_metas[meta] = zeros((1, len(user_vector)), dtype = float)
-
+                # user_metas[meta] = zeros((1, len(user_vector)), dtype = float)
+                user_metas.append(zeros((len(user_vector), ), dtype = float))
+            
             for item in test_items:
-                meta_value = item_X_meta_matrix[item - coords[1]][meta]
-                #print "meta_ctr = ", meta_ctr
-                #print "item = ", item
-                #print "start_zero_item = ", start_zero_item
-                #print "len(values) = ", len(values)
-                
-                #print "user_metas = ", user_metas
-                #print "meta_value = ", meta_value
-                #print "user_metas[meta] = ", user_metas[meta]
-                #print "user_metas[meta][meta_value] = ", (user_metas[meta][0])[meta_value]
-                
-                values[meta_ctr][item - start_zero_item] = (user_metas[meta][0])[meta_value]
-                #print "values[meta_ctr][item - start_zero_item] = ", values[meta_ctr][item - start_zero_item]
-                #print "user_metas[meta][meta_value] = ", user_metas[meta][meta_value]
+                meta_value = item_X_meta_matrix[item - coords[1], meta]
+                values[meta_ctr, item - coords[1]] = (user_metas[meta_ctr])[meta_value]
 
+            meta_ctr += 1
 
-        meta_ctr += 1
-
-        print "values.shape = ", values.shape
-        print "values = ", values
-        print "sum(sum(values)) = ", sum(sum(values))
-        print "meta_weights.shape = ", meta_weights.shape
-        print "meta_weights = ", meta_weights
-        prediction_vector = numpy.sum(meta_weights * values, axis = 0)
-        print "prediction_vector = ", prediction_vector
+        prediction_vector = numpy.sum(META_WEIGHTS * values, axis = 0)
+        prediction_matrix[user - coords[0]] = prediction_vector
         
-        #prediction_matrix[user - start_zero_user] = myRound(prediction_vector)
-        prediction_matrix[user - start_zero_user] = prediction_vector
-        
-        print "Press any key to continue:"
-        sys.stdin.read(1)
+        #print "Press any key to continue:"
+        #sys.stdin.read(1)
         
 #  =====  END OF MAIN CYCLE  =====  
 
