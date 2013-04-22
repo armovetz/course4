@@ -2,7 +2,7 @@ import numpy
 
 TIME_ID = 5
 
-USERS_NUMB = 35056          # CTHULHU
+USERS_NUMB = 35055          # CTHULHU
 ITEMS_NUMB = 21825          # CTHULHU
 
 """ section for classic cross-validation """

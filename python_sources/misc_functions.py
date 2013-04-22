@@ -1,6 +1,7 @@
 import datetime
 import sys
 import ini
+import numpy
 
 def gag():
 
@@ -13,8 +14,13 @@ def gag():
 
 def getMeta(seminar_meta_string, meta_position_id):
     stri = seminar_meta_string.split('\t')[meta_position_id]
+    try:
+        int(stri)
+    except ValueError:
+        return 0
+    
     if stri == "":
-        return -1
+        return 0
     else:
         return int(stri)
         
@@ -99,3 +105,14 @@ def getTimeInterval(item_id, item_X_time_list, coords):
 def step():
     print "Press any key to continue:"
     sys.stdin.read(1)
+
+
+def cosineSimilarity(vec1, vec2):
+    result = float(numpy.dot(abs(vec1), abs(vec2)))
+
+    denominator = (float(numpy.sum(abs(vec1) ** 2)) ** 0.5) * (float(numpy.sum((vec2) ** 2)) ** 0.5)
+    
+    if denominator == 0.0:
+        return 0
+    else:
+        return (result / denominator)

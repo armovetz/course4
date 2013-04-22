@@ -39,6 +39,144 @@ def createItem_x_MetaMatrix_global():
 
 
 
+def createItem_x_ItemSimilarity_local(training_items, test_items):
+    
+    meta_matrix = scipy.io.mmio.mmread("../../../well_done/items-metas_global").tocsr()
+    similarity_file = open("item_similarities", 'w')
+    
+    for i in test_items:
+        i_vector = meta_matrix[i].toarray()[0]
+        print "i_vector = ", i_vector
+        
+        for j in training_items:
+            j_vector = meta_matrix[j].toarray()[0]
+            
+            similarity = misc_functions.cosineSimilarity(i_vector, j_vector)
+            
+            similarity_file.write(str(i) + "\t" + str(j) + "\t" + str(similarity) + "\n")
+    
+    similarity_file.close()
+
+def createItem_x_ItemSimilarities(time_flag):
+    
+    if time_flag:
+        """
+            SPECIAL TIME CROSS-VALIDATION
+        """
+        os.chdir("../data/tmp/time_cross_validation")
+    
+        for i in range(ITERATIONS_NUMB):
+            print "Iteration = ", i + 1, "/", ITERATIONS_NUMB
+            
+            # changing directory for current case
+            cur_dir = str(i)
+            os.chdir(cur_dir)
+            
+            # reading coords for current case
+            coords = misc_functions.getWindowCoords()
+    
+            # get training and test items lists
+            test_items = range(coords[1], coords[3] + 1)
+            training_items = range(0, coords[1])
+            
+            createItem_x_ItemSimilarity_local(training_items, test_items)
+                
+            # returning to "cross_validation" directory
+            os.chdir("..")
+    else:    
+        """
+            CLASSIC CROSS-VALIDATION
+        """
+        os.chdir("../data/tmp/cross_validation")
+    
+        # cycle for each case
+        for i in range(SWITCHES_USERS_NUMB):
+            for j in range(SWITCHES_ITEMS_NUMB):
+                print "window: user_window = ", i + 1, "/", SWITCHES_USERS_NUMB
+                print "        item_window = ", j + 1, "/", SWITCHES_ITEMS_NUMB
+    
+                # changing directory for current case
+                cur_dir = str(i) + "_" + str(j)
+                os.chdir(cur_dir)
+
+                # reading coords for current case
+                coords = misc_functions.getWindowCoords()
+
+                # get training and test items lists
+                test_items = range(coords[1], coords[3] + 1)
+                training_items = range(0, coords[1])
+                training_items.extend(range((coords[3] + 1), ITEMS_NUMB))
+
+                createItem_x_ItemSimilarity_local(training_items, test_items)
+
+                # returning to "cross_validation" directory
+                os.chdir("..")
+
+    os.chdir("../../../python_sources")
+    print "TOTAL SUCCESS! \n local similarities matrices are prepared!"
+
+# ==  createItem_x_ItemSimilarity  ===================================
+def createItem_x_ItemSimilarities2(time_flag):
+    
+    if time_flag:
+        """
+            SPECIAL TIME CROSS-VALIDATION
+        """
+        os.chdir("../data/tmp/time_cross_validation")
+    
+        for i in range(ITERATIONS_NUMB):
+            print "Iteration = ", i + 1, "/", ITERATIONS_NUMB
+            
+            # changing directory for current case
+            cur_dir = str(i)
+            os.chdir(cur_dir)
+            
+            # reading coords for current case
+            coords = misc_functions.getWindowCoords()
+    
+            # get training and test items lists
+            test_items = range(coords[1], coords[3] + 1)
+            training_items = range(0, coords[1])
+            
+            createItem_x_ItemSimilarity_local(training_items, test_items)
+                
+            # returning to "cross_validation" directory
+            os.chdir("..")
+    else:    
+        """
+            CLASSIC CROSS-VALIDATION
+        """
+        os.chdir("../data/tmp/cross_validation")
+    
+        # cycle for each case
+        for i in range(SWITCHES_USERS_NUMB):
+            for j in range(SWITCHES_ITEMS_NUMB):
+                print "window: user_window = ", i + 1, "/", SWITCHES_USERS_NUMB
+                print "        item_window = ", j + 1, "/", SWITCHES_ITEMS_NUMB
+    
+                # changing directory for current case
+                cur_dir = str(i) + "_" + str(j)
+                os.chdir(cur_dir)
+
+                # reading coords for current case
+                coords = misc_functions.getWindowCoords()
+
+                # get training and test items lists
+                test_items = range(coords[1], coords[3] + 1)
+                training_items = range(0, coords[1])
+                training_items.extend(range((coords[3] + 1), ITEMS_NUMB))
+
+                createItem_x_ItemSimilarity_local(training_items, test_items)
+
+                # returning to "cross_validation" directory
+                os.chdir("..")
+
+    os.chdir("../../../python_sources")
+    print "TOTAL SUCCESS! \n local similarities matrices are prepared!"
+# ==  createItem_x_ItemSimilarity  ===================================
+
+
+
 def prepareDirs(time_flag):
     """
         Function prepares directories and stuff for cross-validation
@@ -62,11 +200,9 @@ def prepareDirs(time_flag):
             # defining boundaries for training 'window'
             start_zero_user = 0
             start_zero_item = ITEM_STEP * (i + 1)
-            stop_zero_user = USERS_NUMB
-            stop_zero_item = ITEMS_NUMB
-            if stop_zero_item > ITEMS_NUMB:
-                stop_zero_item = ITEMS_NUMB
-            
+            stop_zero_user = USERS_NUMB - 1
+            stop_zero_item = start_zero_item + ITEM_STEP - 1
+
             # writing coordinates of blank 'window' to local file
             coord_file = open("window_coord", 'w')
             coord_file.write("start_zero_user = " + str(start_zero_user) + "\n")
@@ -95,11 +231,16 @@ def prepareDirs(time_flag):
                 start_zero_item = WINDOW_ITEMS_SIZE * j
                 stop_zero_user = start_zero_user + WINDOW_USERS_SIZE - 1
                 stop_zero_item = start_zero_item + WINDOW_ITEMS_SIZE - 1
-                if stop_zero_user > USERS_NUMB:
-                    stop_zero_user = USERS_NUMB
-                if stop_zero_item > ITEMS_NUMB:
-                    stop_zero_item = ITEMS_NUMB
-
+                if stop_zero_user > USERS_NUMB - 1:
+                    stop_zero_user = USERS_NUMB - 1
+                if stop_zero_item > ITEMS_NUMB - 1:
+                    stop_zero_item = ITEMS_NUMB - 1
+                
+                if (i == SWITCHES_USERS_NUMB - 1): # not enough for last case
+                    stop_zero_user = USERS_NUMB - 1    
+                if (j == SWITCHES_ITEMS_NUMB - 1): # not enough for last case
+                    stop_zero_item = ITEMS_NUMB - 1
+                
                 # writing coordinates of blank 'window' to local file
                 coord_file = open("window_coord", 'w')
                 coord_file.write("start_zero_user = " + str(start_zero_user) + "\n")
@@ -157,10 +298,10 @@ def computeMetaMatrix(meta_list, meta_id_position):
 
             if cur_meta_items != []:
                 meta_matrix = numpy.hstack((meta_matrix, new_meta_col))
-                
+            
             # stacking empty columns of meta for not visited seminars
             while(line_meta_id != cur_meta_id + 1):
-                meta_matrix = numpy.hstack((meta_matrix, new_meta_col))
+                meta_matrix = numpy.hstack((meta_matrix, numpy.zeros((USERS_NUMB, 1), dtype = int)))
                 cur_meta_id += 1
             
             # clean list if new meta_id begins
@@ -174,6 +315,14 @@ def computeMetaMatrix(meta_list, meta_id_position):
             """ !!! """
 
         cur_meta_items.append(line_semin_id)
+    
+    # stacking last column
+    new_meta_col = numpy.zeros((USERS_NUMB, 1), dtype = int)
+    for cur_item in cur_meta_items:
+        cur_item_col = (history_matrix[ : , cur_item]).toarray()
+        new_meta_col = new_meta_col + cur_item_col
+    if cur_meta_items != []:
+        meta_matrix = numpy.hstack((meta_matrix, new_meta_col))
         
     meta_matrix_csr = scipy.sparse.csr_matrix(meta_matrix)
     
@@ -228,7 +377,7 @@ def createUser_x_MetaMatrices(time_flag):
                 computeMetaMatrix(sorted_list, meta)
                 
             # returning to "cross_validation" directory
-                os.chdir("..")
+            os.chdir("..")
     else:    
         """
             CLASSIC CROSS-VALIDATION
@@ -258,6 +407,7 @@ def createUser_x_MetaMatrices(time_flag):
                         meta_list.append(line)
                     meta_file.close()
                 
+                    print "A"
                     # sort strings of meta of seminars for future indexing
                     sorted_list = misc_functions.sortMetaListByMeta(meta_list, meta)
                 
@@ -299,23 +449,8 @@ def prepareTestClusters():
     cur_cluster = ["user" + "\t" + str(coords[0])]
     
     # skip comments
-    for i in range(3):
+    for i2 in range(3):
         test_matrix_file.readline()
-    
-    """
-    for line in test_matrix_file:
-        user = int(line.split()[0]) - 1
-        
-        # next user
-        if user != cur_user:
-            cur_user = user
-            clusters_list.append(cur_cluster)
-            cur_cluster = ["user\t" + str(user)]
-        
-        item_id = int(line.split()[1]) - 1 + coords[1]
-        time_bounds = getTimeInterval(item_id, item_X_time_list)
-        cur_cluster.append(str(time_bounds[0]) + "\t" + str(item_id) + "\t" + str(time_bounds[1]))
-    """
     
     cur_user = -1
     cur_cluster = []
@@ -341,99 +476,7 @@ def prepareTestClusters():
     test_clusters_file.close()
 # ==  prepareTestClusters  ===========================================
 
-"""
 def prepareTrainingMatrices(time_flag):
-    
-        Function prepares training matrix for each case of cross-validation
-        or time cross-validation - depending on flag. Matrix is saved
-        as "history.mtx" in directory for each case.
-    
-    
-    if time_flag:
-        
-            SPECIAL TIME CROSS-VALIDATION
-        
-        os.chdir("../data/tmp/time_cross_validation")
-        for i in range(ITERATIONS_NUMB):
-            print "Iteration = ", i + 1, "/", ITERATIONS_NUMB
-            
-            # changing directory for current case
-            cur_dir = str(i)
-            os.chdir(cur_dir)
-
-            # reading coords for current case
-            coords = misc_functions.getWindowCoords()
-
-            print "Reading history matrix ..."
-            history_matrix = scipy.io.mmio.mmread("../../../well_done/history.mm")
-            print "...done!"
-            
-            print "Converting sparse history_matrix to numpy array ..." # getting ENORMOUS matrix
-            local_training_matrix = history_matrix.toarray()
-            print "...done!"
-            
-            print "Saving 'empty' testing window..."
-            local_training_matrix[coords[0] : coords[2], coords[1] : coords[3]] = 0
-            print "...done!"
-            
-            csr_local_training_matrix = scipy.sparse.csr_matrix(local_training_matrix)
-            #trying to delete this ENORMOUS matrix
-            del local_training_matrix
-            
-            scipy.io.mmio.mmwrite("history", csr_local_training_matrix, 'integer')
-            print "...done!"
-            
-            os.chdir("..")
-    else:
-        
-            CLASSIC CROSS-VALIDATION
-        
-    
-        os.chdir("../data/tmp/cross_validation")
-        # cycle for each case
-        for i in range(SWITCHES_USERS_NUMB):
-            for j in range(SWITCHES_ITEMS_NUMB):
-                print "window: user_window = ", i + 1, "/", SWITCHES_USERS_NUMB
-                print "        item_window = ", j + 1, "/", SWITCHES_ITEMS_NUMB
-            
-                # changing directory for current case
-                cur_dir = str(i) + "_" + str(j)
-                os.chdir(cur_dir)
-                
-                print "Writing local training matrix ..."
-                now = datetime.datetime.now()
-                now_string = now.strftime("%Y-%m-%d %H:%M")
-            
-                # reading coords for current case
-                coords = misc_functions.getWindowCoords()
-
-                print "Reading history matrix ..."
-                history_matrix = scipy.io.mmio.mmread("../../../well_done/history.mm")
-                print "...done!"
-            
-                print "Converting sparse history_matrix to numpy array ..." # getting ENORMOUS matrix
-                local_training_matrix = history_matrix.toarray()
-                print "...done!"
-            
-                print "Saving 'empty' testing window..."
-                local_training_matrix[coords[0] : coords[2], coords[1] : coords[3]] = 0
-                print "...done!"
-                csr_local_training_matrix = scipy.sparse.csr_matrix(local_training_matrix)
-                #trying to delete this ENORMOUS matrix
-                del local_training_matrix
-            
-                scipy.io.mmio.mmwrite("history", csr_local_training_matrix, now_string, 'integer')
-                print "...done!"
-            
-                os.chdir("..")
-    
-    os.chdir("../../../python_sources")
-
-    print "TOTAL SUCCESS! \n Training local matrices are prepared!"
-# ==  prepareTrainingMatrices  =======================================
-"""
-
-def prepareTrainingMatrices2(time_flag):
     """
         Function prepares training matrix for each case of cross-validation
         or time cross-validation - depending on flag. Matrix is saved
@@ -454,32 +497,12 @@ def prepareTrainingMatrices2(time_flag):
 
             # reading coords for current case
             coords = misc_functions.getWindowCoords()
-
-            """print "Reading history matrix ..."
-            history_matrix = scipy.io.mmio.mmread("../../../well_done/history.mm")
-            print "...done!"
-            
-            print "Converting sparse history_matrix to numpy array ..." # getting ENORMOUS matrix
-            local_training_matrix = history_matrix.toarray()
-            print "...done!"
-            
-            print "Saving 'empty' testing window..."
-            local_training_matrix[coords[0] : coords[2], coords[1] : coords[3]] = 0
-            print "...done!"
-            
-            csr_local_training_matrix = scipy.sparse.csr_matrix(local_training_matrix)
-            #trying to delete this ENORMOUS matrix
-            del local_training_matrix
-            
-            scipy.io.mmio.mmwrite("history", csr_local_training_matrix, now_string, 'integer')
-            print "...done!"
-            """
             
             original_history_file = open("../../../well_done/history.mm")
             local_training_history_file = open("history.mtx", 'w')
             
             #skip comments
-            for i in range(2):
+            for i2 in range(2):
                 local_training_history_file.write(original_history_file.readline())
                 
             # debugging stuff
@@ -503,7 +526,6 @@ def prepareTrainingMatrices2(time_flag):
                 #step()
             
             local_training_history_file.write(str(USERS_NUMB) + " " + str(ITEMS_NUMB) + " " + str(visits_ctr) + "\n")
-            
             for line in ltw_list:
                 local_training_history_file.write(line)
             
@@ -531,8 +553,9 @@ def prepareTrainingMatrices2(time_flag):
         # cycle for each case
         for i in range(SWITCHES_USERS_NUMB):
             for j in range(SWITCHES_ITEMS_NUMB):
-                print "window: user_window = ", i + 1, "/", SWITCHES_USERS_NUMB
-                print "        item_window = ", j + 1, "/", SWITCHES_ITEMS_NUMB
+                #print "window: user_window = ", i + 1, "/", SWITCHES_USERS_NUMB
+                #print "        item_window = ", j + 1, "/", SWITCHES_ITEMS_NUMB
+                print "cur work_dir = " + "<" + str(i) + "_" + str(j) + ">"
             
                 # changing directory for current case
                 cur_dir = str(i) + "_" + str(j)
@@ -549,7 +572,7 @@ def prepareTrainingMatrices2(time_flag):
                 local_training_history_file = open("history.mtx", 'w')
             
                 #skip comments
-                for i in range(2):
+                for i2 in range(2):
                     local_training_history_file.write(original_history_file.readline())
                 
                 # debugging stuff
@@ -565,7 +588,7 @@ def prepareTrainingMatrices2(time_flag):
 
                     #print "item = ", item
                     #step()
-                    if ((item < coords[1]) or (item > coords[3])) and ((user < coords[0]) or (user > coords[2])):
+                    if ((item < coords[1]) or (item > coords[3])) or ((user < coords[0]) or (user > coords[2])):
                         ltw_list.append(line)
                         visits_ctr += 1
                         #print "A"
@@ -589,6 +612,9 @@ def prepareTrainingMatrices2(time_flag):
                 print "zeros_ctr + visits_ctr = ", zeros_ctr + visits_ctr
                 print " -------------------------- "
                 """
+                
+                if (zeros_ctr + visits_ctr != total_ctr):
+                    raise Exception("counters mismatch")
             
                 os.chdir("..")
     
@@ -627,12 +653,10 @@ def prepareTestingMatrices(time_flag):
 
             print "Reading history matrix ..."
             history_matrix = scipy.io.mmio.mmread("../../../well_done/history.mm")
-            print "...done!"
             
             print "Saving test matrix..."
-            local_testing_matrix = (history_matrix.tocsr())[coords[0] : coords[2] + 1, coords[1] : coords[3] + 1].copy()
+            local_testing_matrix = (history_matrix.tocsr())[ : , coords[1] : coords[3] + 1].copy()
             scipy.io.mmio.mmwrite("test", local_testing_matrix, now_string, 'integer')
-            print "...done!"
             
             print "Creating local testing clusters..."
             prepareTestClusters()
@@ -662,12 +686,10 @@ def prepareTestingMatrices(time_flag):
 
                 print "Reading history matrix ..."
                 history_matrix = scipy.io.mmio.mmread("../../../well_done/history.mm")
-                print "...done!"
             
                 print "Saving test matrix..."
                 local_testing_matrix = (history_matrix.tocsr())[coords[0] : coords[2] + 1, coords[1] : coords[3] + 1].copy()
                 scipy.io.mmio.mmwrite("test", local_testing_matrix, now_string, 'integer')
-                print "...done!"
             
                 print "Creating local testing clusters..."
                 prepareTestClusters()
@@ -677,7 +699,6 @@ def prepareTestingMatrices(time_flag):
     os.chdir("../../../python_sources")
     print "TOTAL SUCCESS! \n Local testing matrices and clusters are prepared!"
 # == prepareTestingMatrices ==========================================
-
 
 
 
@@ -714,64 +735,33 @@ def fullPrepares(time_flag):
         raise Exception("Bad time_flag")
 
     # create directories for current setting for cross validation
-    #prepareDirs(time_flag)
+    # prepareDirs(time_flag)
+    # classic - done!
+    # time - done!
 
     # create training history matrices for cross validation
-    #prepareTrainingMatrices2(time_flag)
+    # prepareTrainingMatrices(time_flag)
+    # classic - done!
+    # time - done!
     
     # create user_X_meta matrices
-    createUser_x_MetaMatrices(time_flag)
+    # createUser_x_MetaMatrices(time_flag)
+    # classic - done! 
+    # time - done!
 
     # create item_X_meta matrix (global)
-    #createItem_x_MetaMatrix_global(time_flag)
+    # createItem_x_MetaMatrix_global()
+    # common - done!
 
-    # create test history matrices and test clusters
-    #prepareTestingMatrices(time_flag)
-
-"""
-def fullPrepares_manual(time_flag):
-
-    print "                                *                                "
-    print "                                                     *           "
-    print "                           *         00                          "
-    print "  *                             000000                           "
-    print "           *                  0000000                            "
-    print "                            0000000                              "
-    print "                          00000000                          *    "
-    print "           *             00000000             *                  "
-    print "                        000000000                                "
-    print "                 *      000000000                         *      "
-    print "   *                    000000000                                "
-    print "                         000000000           *                   "
-    print "                           000000000                             "
-    print "          *                   0000000                     *      "
-    print "                         *       000000                          "
-    print "                                     0000                        "
-    print "           *                               *             *       "
-    print "                                                                 "
-    print "      *           *        *                                     "
-    print "           *                           *                         "
-    print "GOOD NIGHT!\n"
-
-    # check if time_flag is correct
-    if (time_flag != True) or (time_flag != False):
-        raise Exception("Bad time_flag")
-
-    # create directories for current setting for cross validation
-    if time_flag:
-        prepareDirs_Time()
-    else:
-        prepareDirs()
-
-    # create training history matrices for cross validation
-    prepareTrainingMatrices(time_flag)
     
-    # create user_X_meta matrices
-    createUser_x_MetaMatrices(time_flag)
-
-    # create item_X_meta matrix (global)
-    createItem_x_MetaMatrix_global()
+    # create item_X_item similarities (global)
+    # createItem_x_ItemSimilarities(time_flag)
+    # common
 
     # create test history matrices and test clusters
-    prepareTestingMatrices(time_flag)
-"""
+    prepareTestingMatrices(time_flag) 
+    # classic - done!
+    # time
+    
+    
+    

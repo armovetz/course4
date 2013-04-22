@@ -8,25 +8,6 @@ import misc_functions
 import ini
 from ini import *
 
-# .INI
-#metas_to_use = {3 : "place", 4 : "presenter", 6 : "category", 9 : "organizer", 11 : "city", 15 : "seminartype"}
-#metas_to_use = {6 : "categories", 15 : "seminar_types"}
-#meta_weights = numpy.array([[0], [0], [0], [0], [0], [0], [0.7], [0], [0], [0], [0], [0], [0], [0], [0], [0.3], [0]], dtype = float)
-#meta_weights = numpy.array([[0.7], [0.3]], dtype = float)
-#map_vector = numpy.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-
-"""
-CONST_RATING_TRESHOLD = 0.4
-    res = zeros((1, len(prediction_vector)), dtype = int)
-    for i in range(len(prediction_vector)):
-        if prediction_vector[i] > CONST_RATING_TRESHOLD:
-            res[i] = rating
-        else:
-            res[0,i] = 0
-    return res
-"""
-
-
 def prediction():
     """
         Main function for computing prediction rating.
@@ -41,6 +22,9 @@ def prediction():
     #print "test_items = ", test_items
     
     # this matrix to be written as result finally
+    print "len(test_users) = ", len(test_users)
+    print "len(test_items) = ", len(test_items)
+    #misc_functions.step()
     prediction_matrix = zeros((len(test_users), len(test_items)), dtype = float)
     
     training_matrix = scipy.io.mmio.mmread("history.mtx").tocsr()
@@ -71,7 +55,11 @@ def prediction():
         values = zeros((len(METAS_TO_USE), len(test_items)), dtype = float)
         meta_ctr = 0
         for meta in METAS_TO_USE:
-            user_vector = meta_matrices[meta_ctr][user - coords[0]]
+            #print "meta_matrices = ", meta_matrices
+            #print "meta_matrices[meta_ctr] = ", meta_matrices[meta_ctr]
+            user_vector = meta_matrices[meta_ctr][user]
+            #print "user_vector = ", user_vector
+            #misc_functions.step()
             
             # normalizing counts of visited metas to use them as weights later
             if max(user_vector) != 0:
@@ -82,8 +70,15 @@ def prediction():
                 user_metas.append(zeros((len(user_vector), ), dtype = float))
             
             for item in test_items:
-                meta_value = item_X_meta_matrix[item - coords[1], meta]
-                values[meta_ctr, item - coords[1]] = (user_metas[meta_ctr])[meta_value]
+                meta_value = item_X_meta_matrix[item, meta]
+                
+                #print "len(user_metas) = ", len(user_metas)
+                #print "meta_ctr = ", meta_ctr
+                #print "meta_value = ", meta_value
+                #print "user_metas[meta_ctr] = ", user_metas[meta_ctr]
+                #print "user_metas[meta_ctr].shape = ", user_metas[meta_ctr].shape
+                #print "item = ", item
+                values[meta_ctr][item - coords[1]] = (user_metas[meta_ctr])[meta_value - 1]
 
             meta_ctr += 1
 
@@ -96,7 +91,7 @@ def prediction():
 #  =====  END OF MAIN CYCLE  =====  
 
     result_matrix = scipy.sparse.csr_matrix(prediction_matrix)
-    scipy.io.mmio.mmwrite("prediction", result_matrix, field = 'real', precision = 3)
+    scipy.io.mmio.mmwrite("prediction_engine", result_matrix, field = 'real', precision = 3)
 
 
 

@@ -7,7 +7,7 @@ import sys
 
 import numpy
 
-def estimateLocal():
+def estimateLocal(prediction_file_name, results_file_name):
     """
         Function estimates accuracy of prediction in each case of 
         cross-validation - it gets results of prediction from 
@@ -20,7 +20,7 @@ def estimateLocal():
     """
     
     # file stuff
-    prediction_matrix = scipy.io.mmio.mmread("prediction.mtx").tocsr()
+    prediction_matrix = scipy.io.mmio.mmread(prediction_file_name).tocsr()
     test_matrix = scipy.io.mmio.mmread("test.mtx").tocsr()
     clusters_file = open("test_clusters", 'r')
     
@@ -56,11 +56,11 @@ def estimateLocal():
     local_average_nDCGp = 0.0
     user_ctr = 0
     for user_cluster in clusters_list:
-        #print "user = ", user_ctr
+        print "user = ", user_ctr
         user_ctr += 1
         #print "user_cluster = ", user_cluster
         #print "user_cluster[0] = ", user_cluster[0]
-        user = int((user_cluster[0]).split("\t")[1]) - 1
+        user = int((user_cluster[0]).split("\t")[1]) - coords[0] 
         user_prediction = prediction_matrix[user].toarray()[0]
         user_visits = test_matrix[user].toarray()[0]
         
@@ -92,9 +92,12 @@ def estimateLocal():
             nDCGp = float(0.0)
             p = len(sorted_predictions)
             for i in range(1, p + 1):
+                print "i"
                 nDCGp += float(sorted_visits[i - 1]) / float(math.log(i + 1, 2))
             """ / TO BE NORMALIZED """
             
+            if (nDCGp > 1.0):
+                nDCGp = 1.0
             #print "nDCGp = ", nDCGp
             #step()
             if (nDCGp < 0.0):
@@ -103,8 +106,6 @@ def estimateLocal():
                 #print "nDCGp = ", nDCGp
                 #raise Exception("Incorrect nDCGp")
             
-            if (nDCGp > 1.0):
-                nDCGp = 1.0
             user_average_nDCGp += nDCGp
         
         if (len(user_cluster) != 1):                       # WHY -1??
@@ -114,8 +115,9 @@ def estimateLocal():
     
     local_average_nDCGp /= (len(clusters_list))
     
-    results_file = open("results", 'w')
+    results_file = open(results_file_name, 'w')
     results_file.write(str(local_average_nDCGp))
     results_file.close()
     
     return local_average_nDCGp
+
