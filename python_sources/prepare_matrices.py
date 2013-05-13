@@ -26,7 +26,8 @@ def createItem_x_MetaMatrix_global():
         
         seminar_string = seminars_meta_file.readline()
         
-        for meta in METAS_TO_USE:
+        #for meta in METAS_TO_USE:
+        for meta in range(17):
             item_X_meta_matrix[seminar_id][meta] = misc_functions.getMeta(seminar_string, meta)
 
     seminars_meta_file.close()
@@ -287,9 +288,12 @@ def computeMetaMatrix(meta_list, meta_id_position):
         #line_meta_id = int(line.split('\t')[meta_id_position])
         line_meta_id = getMeta(line, meta_id_position)
         line_semin_id = getMeta(line, 0) # considering everywhere semin_id_position == 0
+        #print line_semin_id
+        #step()
 
         # if new meta_id detected
         if line_meta_id != cur_meta_id:
+            print line_meta_id
             new_meta_col = numpy.zeros((USERS_NUMB, 1), dtype = int)
             
             for cur_item in cur_meta_items:
@@ -332,7 +336,6 @@ def computeMetaMatrix(meta_list, meta_id_position):
     meta_matrix_file_name = "users-" + METAS_TO_USE[meta_id_position]
     scipy.io.mmio.mmwrite(meta_matrix_file_name, meta_matrix_csr, now_string, 'integer')
 # ==  computeMetaMatrix  =============================================
-
 
 
 def createUser_x_MetaMatrices(time_flag):
@@ -422,7 +425,7 @@ def createUser_x_MetaMatrices(time_flag):
 # ==  createUser_x_MetaMatrices  =====================================
 
 
-def prepareTestClusters():
+def makeClusters():
     """
         Internal function.
         Function prepares test clusters when launched inside directory
@@ -460,6 +463,7 @@ def prepareTestClusters():
         item_id = int(line.split()[1]) - 1 + coords[1]
         
         if user_id != cur_user:     # next user
+            #print "user_id = ", user_id
             cur_user = user_id
             if cur_cluster != []:
                 clusters_list.append(cur_cluster)
@@ -467,8 +471,8 @@ def prepareTestClusters():
         time_bounds = getTimeInterval(item_id, item_X_time_list, coords)
         cur_cluster.append(str(time_bounds[0]) + "\t" + str(item_id) + "\t" + str(time_bounds[1]))
         
-    test_clusters_file = open("test_clusters", 'w')
-    test_clusters_file.write("low_bound high_bound  item_id\n")
+    test_clusters_file = open("test_clusters_" + str(DAYS_INTERVAL_PREPARE), 'w')
+    test_clusters_file.write("low_bound item_id high_bound\n")
     for cluster in clusters_list:
         for line in cluster:
             test_clusters_file.write(line + "\n")
@@ -655,11 +659,11 @@ def prepareTestingMatrices(time_flag):
             history_matrix = scipy.io.mmio.mmread("../../../well_done/history.mm")
             
             print "Saving test matrix..."
-            local_testing_matrix = (history_matrix.tocsr())[ : , coords[1] : coords[3] + 1].copy()
+            if i != ITERATIONS_NUMB - 1:
+                local_testing_matrix = (history_matrix.tocsr())[ : , coords[1] : coords[3] + 1].copy()
+            else:
+                local_testing_matrix = (history_matrix.tocsr())[ : , coords[1] : ].copy()
             scipy.io.mmio.mmwrite("test", local_testing_matrix, now_string, 'integer')
-            
-            print "Creating local testing clusters..."
-            prepareTestClusters()
             
             os.chdir("..")
     else:
@@ -691,14 +695,50 @@ def prepareTestingMatrices(time_flag):
                 local_testing_matrix = (history_matrix.tocsr())[coords[0] : coords[2] + 1, coords[1] : coords[3] + 1].copy()
                 scipy.io.mmio.mmwrite("test", local_testing_matrix, now_string, 'integer')
             
-                print "Creating local testing clusters..."
-                prepareTestClusters()
-                            
                 os.chdir("..")
     
     os.chdir("../../../python_sources")
     print "TOTAL SUCCESS! \n Local testing matrices and clusters are prepared!"
 # == prepareTestingMatrices ==========================================
+
+def prepareTestClusters(time_flag):
+    
+    if time_flag:
+        """
+            SPECIAL TIME CROSS-VALIDATION
+        """
+        os.chdir("../data/tmp/time_cross_validation")
+
+        for i in range(ITERATIONS_NUMB):
+            print "Iteration = ", i + 1, "/", ITERATIONS_NUMB
+            cur_dir = str(i)
+            os.chdir(cur_dir)
+            
+            print "Creating local testing clusters..."
+            makeClusters()
+            
+            os.chdir("..")
+    else:
+        """
+            CLASSIC CROSS-VALIDATION
+        """
+        os.chdir("../data/tmp/cross_validation")
+    
+        # cycle for each case
+        for i in range(SWITCHES_USERS_NUMB):
+            for j in range(SWITCHES_ITEMS_NUMB):
+                print "window: user_window = ", i + 1, "/", SWITCHES_USERS_NUMB
+                print "        item_window = ", j + 1, "/", SWITCHES_ITEMS_NUMB
+
+                # changing directory for current case
+                cur_dir = str(i) + "_" + str(j)
+                os.chdir(cur_dir)
+                
+                print "Creating local testing clusters..."
+                makeClusters()
+                
+                os.chdir("..")
+
 
 
 
@@ -745,7 +785,7 @@ def fullPrepares(time_flag):
     # time - done!
     
     # create user_X_meta matrices
-    # createUser_x_MetaMatrices(time_flag)
+    createUser_x_MetaMatrices(time_flag)
     # classic - done! 
     # time - done!
 
@@ -758,10 +798,15 @@ def fullPrepares(time_flag):
     # createItem_x_ItemSimilarities(time_flag)
     # common
 
-    # create test history matrices and test clusters
-    prepareTestingMatrices(time_flag) 
+    # create test history matrices
+    # prepareTestingMatrices(time_flag) 
     # classic - done!
-    # time
+    # time - done!
+    
+    # create test clusters
+    # prepareTestClusters(time_flag) 
+    # classic - done!
+    # time - done!
     
     
     

@@ -1,6 +1,7 @@
 import datetime
 import sys
 import ini
+from ini import *
 import numpy
 
 def gag():
@@ -76,7 +77,17 @@ def ifTimeInterval(time_string1, time_string2):
     time1 = datetime.datetime.strptime(time_string1, "%Y-%m-%d %H:%M:%S")
     time2 = datetime.datetime.strptime(time_string2, "%Y-%m-%d %H:%M:%S")
     
-    if (time1 - time2).days != 0:
+    """
+    print "time1 = ", time1
+    print "time2 = ", time2
+    print "time1 - time2 = ", abs(time1 - time2)
+    print "time1 - time2.days = ", (abs(time1 - time2)).days
+    print "time1 - time2.hours = ", (abs(time1 - time2))
+    exec("help(time1 - time2)")
+    step()
+    """
+    
+    if abs((time1 - time2)).days >= DAYS_INTERVAL_PREPARE:
         return True
     else:
         return False
@@ -94,10 +105,13 @@ def getTimeInterval(item_id, item_X_time_list, coords):
     low_bound = i
     
     i = item_id
+    #print "len(item_X_time_list) = ", len(item_X_time_list)
+    #print "item_id = ", item_id
     while not ifTimeInterval(item_X_time_list[i], item_X_time_list[item_id]):
-        if (i + 1) > coords[3]:
+        if ((i + 1) > coords[3]) or ((i + 1) >= ITEMS_NUMB - 1):
             break
         i += 1
+        #print "i = ", i
     high_bound = i
     
     return [low_bound, high_bound]
@@ -116,3 +130,30 @@ def cosineSimilarity(vec1, vec2):
         return 0
     else:
         return (result / denominator)
+
+def getClustersListFromClustersFile(days_interval):
+    
+    clusters_file = open("test_clusters_" + str(days_interval), 'r')
+    
+    # skip header 
+    clusters_file.readline()
+    user0 = int(clusters_file.readline().split("\t")[1]) 
+    
+    clusters_list = []
+    cur_cluster = ["user" + "\t" + str(user0)]
+
+    # reading clusters info to local lists
+    for line in clusters_file:
+        #print line
+
+        # if new user
+        if line.find("user") != -1:
+            clusters_list.append(cur_cluster)
+            cur_cluster = [line]
+        else:
+            cur_cluster.append(line)
+    # appending last cluster
+    clusters_list.append(cur_cluster)
+    clusters_file.close()
+    
+    return clusters_list

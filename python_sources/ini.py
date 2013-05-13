@@ -5,6 +5,8 @@ TIME_ID = 5
 USERS_NUMB = 35055          # CTHULHU
 ITEMS_NUMB = 21825          # CTHULHU
 
+MAX_METAS_NUMB = 17
+
 """ section for classic cross-validation """
 TRAINING_USERS_RATE = 0.8   # CTHULHU
 TRAINING_ITEMS_RATE = 0.8   # CTHULHU
@@ -16,20 +18,27 @@ SWITCHES_ITEMS_NUMB = int(1 / TESTING_ITEMS_RATE)   # CTHULHU
 
 WINDOW_USERS_SIZE = int(USERS_NUMB / SWITCHES_USERS_NUMB)   # CTHULHU
 WINDOW_ITEMS_SIZE = int(ITEMS_NUMB / SWITCHES_ITEMS_NUMB)   # CTHULHU
-""" \classic cross-validation """
+
 
 """ section for special time cross-validation """
 #STEPS_NUMB = 11
 ITEM_STEP = 2000
 ITERATIONS_NUMB = ITEMS_NUMB / ITEM_STEP
-""" \special time cross-validation """
 
-MAX_METAS_NUMB = 17
+
+""" parameters for clusters """
+DAYS_INTERVAL_PREPARE = 3
+DAYS_INTERVAL_EXE = 3
+
+
+""" parameters for engine """
 #METAS_TO_USE = {3 : "place", 4 : "presenter", 6 : "category", 9 : "organizer", 11 : "city", 15 : "seminartype"}
-METAS_TO_USE = {6 : "categories", 15 : "seminar_types"}
-META_WEIGHTS = numpy.array([[0.7], [0.3]], dtype = float)
+#METAS_TO_USE = {6 : "categories", 15 : "seminar_types"}
+METAS_TO_USE = {11 : "city_ids"}
+META_WEIGHTS = numpy.array([[0.8], [0.2]], dtype = float)
 
-TIME_TRESHOLD_INTERVAL = 24
+""" parameters for content-based """
+K = 20
 
 """ 	select
 	0 - id
