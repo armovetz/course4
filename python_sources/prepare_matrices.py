@@ -27,7 +27,7 @@ def createItem_x_MetaMatrix_global():
         seminar_string = seminars_meta_file.readline()
         
         #for meta in METAS_TO_USE:
-        for meta in range(17):
+        for meta in range(18):
             item_X_meta_matrix[seminar_id][meta] = misc_functions.getMeta(seminar_string, meta)
 
     seminars_meta_file.close()
@@ -265,6 +265,8 @@ def computeMetaMatrix(meta_list, meta_id_position):
         in directory for current case.
     """
 
+    #print "meta_id_position = ", meta_id_position
+
     # creating new matrix
     meta_matrix = numpy.zeros((USERS_NUMB, 0), dtype = int)
     
@@ -285,9 +287,23 @@ def computeMetaMatrix(meta_list, meta_id_position):
             continue
 
         """ !!!! DAFUQ!!!! """
+        line_semin_id = getMeta(line, 0) # considering everywhere semin_id_position == 0
         #line_meta_id = int(line.split('\t')[meta_id_position])
         line_meta_id = getMeta(line, meta_id_position)
-        line_semin_id = getMeta(line, 0) # considering everywhere semin_id_position == 0
+        
+        #print line
+        #print line_semin_id
+        #print line_meta_id
+        #step()
+        
+        # PRICE HEURISTIC
+        if meta_id_position == 8:
+            line_meta_id = priceToPriceCat(line_meta_id)
+        
+        # TIME HEURISTIC
+        if meta_id_position == 5:
+            line_meta_id = dayTime(line_meta_id)
+            
         #print line_semin_id
         #step()
 

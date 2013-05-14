@@ -36,7 +36,8 @@ def estimateNDCGp(prediction_file_name, results_file_name, clusters_list):
 # == \DEBUG PRINT =====================================================
     """
     
-    local_average_nDCGp = 0.0
+    local_average_nDCGp = float(0.0)
+    local_average_p = float(0.0)
     #user_ctr = 0
     for user_cluster in clusters_list:
         #misc_functions.step()
@@ -54,6 +55,7 @@ def estimateNDCGp(prediction_file_name, results_file_name, clusters_list):
         #print "user_visits = ", user_visits
         
         user_average_nDCGp = float(0.0)
+        user_average_p = float(0.0)
         for byte in user_cluster[1 : ] :
             #misc_functions.step()
             byte_visits = user_visits[getMeta(byte, 0) - coords[1] : getMeta(byte, 2) + 1 - coords[1]]
@@ -108,21 +110,27 @@ def estimateNDCGp(prediction_file_name, results_file_name, clusters_list):
             
             #print "nDCGp = ", nDCGp
             user_average_nDCGp += nDCGp
+            user_average_p += p
         
         if (len(user_cluster) != 1):                       # WHY -1??
             user_average_nDCGp /= (len(user_cluster) - 1)  # WHY -1??
+            user_average_p /= (len(user_cluster) - 1)
         local_average_nDCGp += user_average_nDCGp
-        
+        local_average_p += user_average_p
     
     local_average_nDCGp /= (len(clusters_list))
+    local_average_p /= (len(clusters_list))
+    local_average_position = math.pow(2, 1.0 / local_average_nDCGp)
     
     print "nDCGp for case = ", local_average_nDCGp
+    print "average p = ", local_average_p
+    print "average position", local_average_position
     
     results_file = open(results_file_name + ".nDCGp", 'w')
     results_file.write(str(local_average_nDCGp))
     results_file.close()
     
-    return local_average_nDCGp
+    return [local_average_nDCGp, local_average_p, local_average_position]
 
 """
 def estimateRecallPrecision(prediction_file_name, results_file_name):

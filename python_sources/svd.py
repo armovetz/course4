@@ -5,6 +5,9 @@ import misc_functions
 #from scipy.io.mmio import *
 from numpy import *
 
+import ini
+from ini import *
+
 import subprocess
 
 
@@ -77,3 +80,58 @@ def prediction(prediction_file_name, clusters_list):
     computePredictionMatrixFromEigenVectors(5, "history.mtx", prediction_file_name, window_coord)
     
 
+
+def svdForAgregated(meta, sing_vector_numb):
+    
+    matrix_file_name = "users-" + METAS_TO_USE[meta] + ".mtx"
+    svd_computed_file_name = "users-" + METAS_TO_USE[meta] + ".svd"
+    
+    #print "meta = ", meta
+    
+    subprocess.call(["~/graphchi/toolkits/collaborative_filtering/svd --training=" \
+        + matrix_file_name + " --nsv=10 --nv=12 --max_iter=5  --quiet=1 --tol=1e-1  > /dev/null"], shell=True)
+
+    U_vectors = []
+    V_vectors = []
+    
+    for i in range(sing_vector_numb):
+        U_vectors.append(scipy.io.mmio.mmread(matrix_file_name + ".U." + str(i)))
+        V_vectors.append(scipy.io.mmio.mmread(matrix_file_name + ".V." + str(i)))
+
+    sigma = scipy.io.mmio.mmread(matrix_file_name + ".singular_values")
+    #sigma = sigma[1:sing_numb]
+    
+    # take first <sing_vector_numb> vectors
+    sigma = sigma[1 : sing_vector_numb + 1]
+    
+    # turn vector into diag matrix
+    sigma = numpy.diagflat(sigma)
+    
+    #print " sigma = ", sigma
+
+    U = numpy.column_stack((U_vectors[0], U_vectors[1]))
+    V = numpy.column_stack((V_vectors[0], V_vectors[1]))
+    
+    #print "U = ", U
+    #print "V = ", V
+    
+    for i in range(2, sing_vector_numb):
+        exec("U = numpy.column_stack((U, U_vectors[" + str(i) +"]))")
+        exec("V = numpy.column_stack((V, V_vectors[" + str(i) +"]))")
+    #print "matrices pre-computing done! \n"
+    
+    #print "U.shape = ", U.shape
+    #print "V.shape = ", V.shape
+    
+    left_result = dot(U, sigma)
+    #print "left_result.shape =",  left_result.shape
+    #print "left_result pre-computing done! \n"
+    svd_computed_matrix = dot(left_result, V.transpose()).transpose()
+    #print "prediction_matrix.shape = ", svd_computed_matrix.shape
+    
+    #print prediction_matrix
+    svd_computed_matrix_csr = scipy.sparse.csr_matrix(svd_computed_matrix)
+    
+    #misc_functions.step()
+    
+    scipy.io.mmio.mmwrite(svd_computed_file_name, svd_computed_matrix_csr, field = 'real', precision = 5)

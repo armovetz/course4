@@ -9,7 +9,7 @@ from misc_functions import *
 import ini
 from ini import *
 
-def prediction(prediction_file_name, clusters_list):
+def prediction(prediction_file_name, clusters_list, svd_use_flag):
     """
         Main function for computing prediction rating.
     """
@@ -35,7 +35,10 @@ def prediction(prediction_file_name, clusters_list):
     meta_ctr = 0
     meta_matrices = []
     for meta in METAS_TO_USE:
-        meta_matrice_file_name = "users-" + METAS_TO_USE[meta] + ".mtx"
+        if svd_use_flag:
+            meta_matrice_file_name = "users-" + METAS_TO_USE[meta] + ".svd.mtx"
+        else:
+            meta_matrice_file_name = "users-" + METAS_TO_USE[meta] + ".mtx"
         exec("meta_matrices.append(scipy.io.mmio.mmread(\"" + meta_matrice_file_name + "\").toarray())")
 
     #user_counter = 0
@@ -52,12 +55,14 @@ def prediction(prediction_file_name, clusters_list):
         values = zeros((len(METAS_TO_USE), len(test_items)), dtype = float)
         meta_ctr = 0
         for meta in METAS_TO_USE:
+            
             #print "    meta_matrices = ", meta_matrices
             #print "    meta_matrices[meta_ctr] = ", meta_matrices[meta_ctr]
             user_vector = meta_matrices[meta_ctr][user]
             #print "    user_vector = ", user_vector
             #print "    len(user_metas) = ", len(user_metas)
             #print "    meta_ctr = ", meta_ctr
+            #print "meta = ", meta
             #misc_functions.step()
             
             # normalizing counts of visited metas to use them as weights later
@@ -77,12 +82,33 @@ def prediction(prediction_file_name, clusters_list):
                 
                 for item in cluster_items:
                     meta_value = item_X_meta_matrix[item, meta]
+                    
+                    # PRICE
+                    if meta == 8:
+                        meta_value = priceToPriceCat(meta_value)
+                    
+                    # CITY HEURISTIC
+                    if meta == 11:
+                        if user_metas[meta_ctr][meta_value - 1] < CITY_TRESHOLD:
+                            values[:, item - coords[1]] *= CITY_COEF
+                    """
+                    # DAYTIME
+                    if meta == 17:
+                        meta_value = dayTime(meta_value)
+                    """
+                    
                     #print "        meta_value = ", meta_value
-                
                     #print "        item = ", item
                     #step()
                     values[meta_ctr][item - coords[1]] = (user_metas[meta_ctr])[meta_value - 1]
                     
+                    """HEURISTICS """
+                    
+                    
+                    
+                    
+                    
+                    """\\ HEURISTICS """
 
             meta_ctr += 1
         #print "values[:, 0:10] = ", values[:, 0:10]

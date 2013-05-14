@@ -12,15 +12,60 @@ def gag():
     print "!!!!!!!!!!!!!!!!!"
 
 
+def dayTime(date_string):
+    time = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+    
+    if time.hour < 0:
+        raise Exception("FUCK")
+    
+    if (time.hour >= 0) and (time.hour <= 7):
+        return 1
+    elif (time.hour > 7) and (time.hour <= 12):
+        return 2
+    elif (time.hour > 12) and (time.hour <= 16):
+        return 3
+    elif (time.hour > 16) and (time.hour <= 20):
+        return 4
+    elif (time.hour > 20):
+        return 5
+        
+def priceToPriceCat(rubles):
+    if rubles < 0:
+        raise Exception("Negative price: " + str(rubles))
+            
+    if rubles == 0:
+        return 1
+    elif (rubles > 0) and (rubles <= 100):
+        return 2
+    elif (rubles > 100) and (rubles <= 500):
+        return 3
+    elif (rubles > 500) and (rubles <= 1000):
+        return 4
+    elif (rubles > 1000) and (rubles <= 5000):
+        return 5
+    else:
+        return 6
+
 
 def getMeta(seminar_meta_string, meta_position_id):
+    
+    #print "GET META"
+    #print "meta_position_id = ", meta_position_id
+    #print "seminar_meta_string = ", seminar_meta_string
+    #step()
+    
+    # DAYTIME
+    if meta_position_id == 17:
+        stri = seminar_meta_string.split('\t')[5]
+        return dayTime(stri)
+    
     stri = seminar_meta_string.split('\t')[meta_position_id]
     try:
         int(stri)
     except ValueError:
         return 0
     
-    if stri == "":
+    if stri == "" or (int(stri) < 0):
         return 0
     else:
         return int(stri)
@@ -37,7 +82,7 @@ def getWindowCoords():
     window_coords_file.close()
     return coords
 
-def sortMetaListByMeta(list, meta_id_position):
+def sortMetaListByMeta(meta_list, meta_id_position):
     
     def my_cmp(op1, op2):
         if op1.split('\t')[meta_id_position] == "":
@@ -56,12 +101,34 @@ def sortMetaListByMeta(list, meta_id_position):
             return 1
         else:
             return -1
+            
+    def cmpHour(op1, op2):
+        """ compares time, that is written in format YYYY-MM-DD HH:MM:SS """
+        time_string1 = op1.split('\t')[5]
+        time_string2 = op2.split('\t')[5]
+        time1 = datetime.datetime.strptime(time_string1, "%Y-%m-%d %H:%M:%S")
+        time2 = datetime.datetime.strptime(time_string2, "%Y-%m-%d %H:%M:%S")
+        if time1.hour >= time2.hour:
+            return 1
+        else:
+            return -1
 
+    """
+    # PRICE HEURISTIC IMPLEMENTING
+    price_meta_list = list(meta_list)
+    if meta_id_position == 8:
+        for line in price_meta_list:
+            if (line.split('\t')[meta_id_position] == "") or (line.split('\t')[meta_id_position] == 0)
+    """
+    # TIME COMPARE
     if meta_id_position == 5:
         # if we need to sort list by time
-        return sorted(list, cmpTime)
+        return sorted(meta_list, cmpTime)
+    elif meta_id_position == 17:
+        # sort by dayTime
+        return sorted(meta_list, cmpHour)
     else:
-        return sorted(list, my_cmp)
+        return sorted(meta_list, my_cmp)
         
 def cmpTime(time_string1, time_string2):
         """ compares time, that is written in format YYYY-MM-DD HH:MM:SS """
