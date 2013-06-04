@@ -9,14 +9,14 @@ import reporter
 #prepare_matrices.fullPrepares(True)
 
 """ REPORT BEGIN """
-session_comment = "categories_off"
+session_comment = "20_50"
 
 #time_flag = True
 prediction_flag = True
 estimate_flag = True
 
 svd_prepare_flag = False
-svd_use_flag = True
+svd_use_flag = False
 svd_sing_vector_numb = 10
 
 # FUNCTION TO RIDE

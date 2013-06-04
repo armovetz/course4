@@ -34,9 +34,9 @@ DAYS_INTERVAL_EXE = 3
 
 
 """ parameters for engine """
-#METAS_TO_USE = {6: "categories", 8: "prices", 11:"city_ids", 15:"seminar_types", 17: "daytimes"}
-METAS_TO_USE = {8: "prices", 11:"city_ids", 15:"seminar_types", 17: "daytimes"}
-META_WEIGHTS = numpy.array([[0.4], [0.0], [0.3], [0.3]], dtype = float)
+METAS_TO_USE = {6: "categories", 8: "prices", 11:"city_ids", 15:"seminar_types", 17: "daytimes"}
+#METAS_TO_USE = {8: "prices"}
+META_WEIGHTS = numpy.array([[0.3], [0.3], [0.0], [0.1], [0.3]], dtype = float)
 #META_WEIGHTS = numpy.array([[1.0]], dtype = float)
 CITY_TRESHOLD = 0.2
 CITY_COEF = 0.1
