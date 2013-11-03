@@ -11,6 +11,14 @@ def gag():
     print " It'S A GAG!!!!!!"
     print "!!!!!!!!!!!!!!!!!"
 
+def getEventDatetime(event_str, time_position):
+    """
+    
+    """
+    
+    event_time_str = split
+    
+# end of getEventDatetime
 
 def dayTime(date_string):
     time = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
@@ -74,13 +82,31 @@ def getMetaString(seminar_meta_string, meta_position_id):
     return seminar_meta_string.split('\t')[meta_position_id]
 
 
-def getWindowCoords():
-    window_coords_file = open("window_coord", 'r')
+def getWindowCoords(path = "."):
+    window_coords_file = open(path + "/window_coords", 'r')
     coords = []
     for line in range(4):
         coords.append(int(window_coords_file.readline().split()[2]))
     window_coords_file.close()
     return coords
+
+def sortMetaListByTime(meta_list, time_meta_position):
+    
+    def cmpTime(op1, op2):
+        """
+            compares time, that is written in format YYYY-MM-DD HH:MM:SS 
+        """
+        time_string1 = op1.split('\t')[time_meta_position]
+        time_string2 = op2.split('\t')[time_meta_position]
+        time1 = datetime.datetime.strptime(time_string1, "%Y-%m-%d %H:%M:%S")
+        time2 = datetime.datetime.strptime(time_string2, "%Y-%m-%d %H:%M:%S")
+        if time1.__ge__(time2):
+            return 1
+        else:
+            return -1
+
+    return sorted(meta_list, cmpTime)
+# enf of sortMetaListByTime
 
 def sortMetaListByMeta(meta_list, meta_id_position):
     
